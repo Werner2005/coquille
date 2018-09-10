@@ -3,6 +3,7 @@ import vim
 import re
 import xml.etree.ElementTree as ET
 import coqtop as CT
+from xml.sax.saxutils import unescape
 
 from collections import deque
 
@@ -154,10 +155,10 @@ def coq_raw_query(*args):
         if response.msg is not None:
             info_msg = response.msg
     elif isinstance(response, CT.Err):
-        info_msg = response.err.text
+        info_msg = ET.tostring(response.err).decode("utf-8")
         print("FAIL")
     else:
-        print("(ANOMALY) unknown answer: %s" % ET.tostring(response)) # ugly
+        print("(ANOMALY) unknown answer: %s" % ET.tostring(response).decode("utf-8")) # ugly
 
     show_info()
 
@@ -198,6 +199,9 @@ def show_goal():
         print('ERROR: the Coq process died')
         return
 
+    if isinstance(response, CT.Err):
+        return
+
     if response.msg is not None:
         info_msg = response.msg
 
@@ -220,11 +224,11 @@ def show_goal():
         if idx == 0:
             # we print the environment only for the current subgoal
             for hyp in hyps:
-                lst = map(lambda s: s.encode('utf-8'), hyp.split('\n'))
+                lst = list(map(lambda s: s.encode('utf-8'), hyp.split('\n')))
                 buff.append(lst)
         buff.append('')
         buff.append('======================== ( %d / %d )' % (idx+1 , nb_subgoals))
-        lines = map(lambda s: s.encode('utf-8'), ccl.split('\n'))
+        lines = list(map(lambda s: s.encode('utf-8'), ccl.split('\n')))
         buff.append(lines)
         buff.append('')
 
@@ -240,7 +244,7 @@ def show_info():
     del buff[:]
     if info_msg is not None:
         lst = info_msg.split('\n')
-        buff.append(map(lambda s: s.encode('utf-8'), lst))
+        buff.append(list(map(lambda s: s.encode('utf-8'), lst)))
 
 def clear_info():
     global info_msg
@@ -291,7 +295,7 @@ def rewind_to(line, col):
         return
 
     predicate = lambda x: x <= (line, col)
-    lst = filter(predicate, encountered_dots)
+    lst = list(filter(predicate, encountered_dots))
     steps = len(encountered_dots) - len(lst)
     coq_rewind(steps)
 
@@ -319,13 +323,14 @@ def send_until_fail():
         message = _between(message_range['start'], message_range['stop'])
 
         response = CT.advance(message, encoding)
+        goalResponse = CT.goals()
 
         if response is None:
             vim.command("call coquille#KillSession()")
             print('ERROR: the Coq process died')
             return
 
-        if isinstance(response, CT.Ok):
+        if isinstance(response, CT.Ok) and isinstance(goalResponse, CT.Ok):
             (eline, ecol) = message_range['stop']
             encountered_dots.append((eline, ecol + 1))
 
@@ -336,17 +341,29 @@ def send_until_fail():
             send_queue.clear()
             if isinstance(response, CT.Err):
                 response = response.err
-                info_msg = response.text
-                loc_s = response.get('loc_s')
-                if loc_s is not None:
-                    loc_s = int(loc_s)
-                    loc_e = int(response.get('loc_e'))
-                    (l, c) = message_range['start']
-                    (l_start, c_start) = _pos_from_offset(c, message, loc_s)
-                    (l_stop, c_stop)   = _pos_from_offset(c, message, loc_e)
-                    error_at = ((l + l_start, c_start), (l + l_stop, c_stop))
+            elif isinstance(goalResponse, CT.Err):
+                response = goalResponse.err
             else:
-                print("(ANOMALY) unknown answer: %s" % ET.tostring(response))
+                print("(ANOMALY) unknown answer: %s" % ET.tostring(response).decode("utf-8"))
+                break
+            info_msg = ET.tostring(response).decode("utf-8")
+            r = response
+            if r.tag == "value":
+                r = r[1]
+                if r.tag == "richpp":
+                    r = r[0]
+                    r = r[0]
+                    msg = re.sub(r'<[/]{0,1}constr\.[a-z]*>', "", ET.tostring(r).decode("utf-8"))
+                    msg = re.sub(r'<[/]{0,1}pp>',  "", msg)
+                    info_msg = unescape(msg)
+            loc_s = response.get('loc_s')
+            if loc_s is not None:
+                loc_s = int(loc_s)
+                loc_e = int(response.get('loc_e'))
+                (l, c) = message_range['start']
+                (l_start, c_start) = _pos_from_offset(c, message, loc_s)
+                (l_stop, c_stop)   = _pos_from_offset(c, message, loc_e)
+                error_at = ((l + l_start, c_start), (l + l_stop, c_stop))
             break
 
     refresh()

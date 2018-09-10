@@ -1,8 +1,10 @@
+import sys
 import os
 import re
 import subprocess
 import xml.etree.ElementTree as ET
 import signal
+from xml.sax.saxutils import unescape
 
 from collections import deque, namedtuple
 
@@ -13,6 +15,7 @@ Inl = namedtuple('Inl', ['val'])
 Inr = namedtuple('Inr', ['val'])
 
 StateId = namedtuple('StateId', ['id'])
+RouteId = namedtuple('Route_id', ['id'])
 Option = namedtuple('Option', ['val'])
 
 OptionState = namedtuple('OptionState', ['sync', 'depr', 'name', 'value'])
@@ -29,7 +32,6 @@ def parse_response(xml):
     if xml.get('val') == 'good':
         return Ok(parse_value(xml[0]), None)
     elif xml.get('val') == 'fail':
-        print('err: %s' % ET.tostring(xml))
         return Err(parse_error(xml))
     else:
         assert False, 'expected "good" or "fail" in <value>'
@@ -50,6 +52,8 @@ def parse_value(xml):
         return int(xml.text)
     elif xml.tag == 'state_id':
         return StateId(int(xml.get('val')))
+    elif xml.tag == 'route_id':
+        return RouteId(int(xml.get('val')))
     elif xml.tag == 'list':
         return [parse_value(c) for c in xml]
     elif xml.tag == 'option':
@@ -86,7 +90,8 @@ def parse_value(xml):
         return ''.join(xml.itertext())
 
 def parse_error(xml):
-    return ET.fromstring(re.sub(r"<state_id val=\"\d+\" />", '', ET.tostring(xml)))
+    #return ET.fromstring(re.sub(r"<state_id val=\"\d+\" />", '', ET.tostring(xml)))
+    return xml
 
 def build(tag, val=None, children=()):
     attribs = {'val': val} if val is not None else {}
@@ -114,6 +119,8 @@ def encode_value(v):
         return xml
     elif isinstance(v, StateId):
         return build('state_id', str(v.id))
+    elif isinstance(v, RouteId):
+        return build('route_id', str(v.id))
     elif isinstance(v, list):
         return build('list', None, [encode_value(c) for c in v])
     elif isinstance(v, Option):
@@ -164,7 +171,8 @@ def get_answer():
     data = ''
     while True:
         try:
-            data += os.read(fd, 0x4000)
+            d = os.read(fd, 0x1000).decode('utf-8')
+            data += d
             try:
                 elt = ET.fromstring('<coqtoproot>' + escape(data) + '</coqtoproot>')
                 shouldWait = True
@@ -179,6 +187,22 @@ def get_answer():
                             messageNode = messageNode + "\n\n" + parse_value(c[2])
                         else:
                             messageNode = parse_value(c[2])
+                    if c.tag == 'feedback':
+                        c = c[1]
+                        if c.tag == 'feedback_content' and c.get('val') == 'message':
+                            c = c[0]
+                            if c.tag == 'message':
+                                c = c[2]
+                                if c.tag == 'richpp':
+                                    c = c[0]
+                                    c = c[0]
+                                    msg = re.sub(r'<[/]{0,1}constr\.[a-z/ ]*>', "", ET.tostring(c).decode("utf-8"))
+                                    msg = re.sub(r'<[/]{0,1}pp>',  "", msg)
+                                    msg = unescape(msg)
+                                    if messageNode is not None:
+                                        messageNode = messageNode + "\n\n" + msg
+                                    else:
+                                        messageNode = msg
                 if shouldWait:
                     continue
                 else:
@@ -189,6 +213,7 @@ def get_answer():
                     return vp
             except ET.ParseError:
                 continue
+                #return None
         except OSError:
             # coqtop died
             return None
@@ -201,7 +226,9 @@ def call(name, arg, encoding='utf-8'):
     return response
 
 def send_cmd(cmd):
-    coqtop.stdin.write(cmd)
+    #coqtop.stdin.write(cmd)
+    fd = coqtop.stdin.fileno()
+    os.write(fd,cmd)
 
 def restart_coq(*args):
     global coqtop, root_state, state_id
@@ -213,6 +240,15 @@ def restart_coq(*args):
               , '-async-proofs'
               , 'on'
               ]
+    projektOptions = []
+    try:
+        f = open("_CoqProject", "r")
+        projektOptions = f.read().split()
+        f.close()
+    except IOError:
+        projektOptions = []
+    options = options + projektOptions
+
     try:
         if os.name == 'nt':
             coqtop = subprocess.Popen(
@@ -265,7 +301,7 @@ def rewind(step = 1):
     return call('Edit_at', state_id)
 
 def query(cmd, encoding = 'utf-8'):
-    r = call('Query', (cmd, cur_state()), encoding)
+    r = call('Query', (RouteId(1),(cmd, cur_state())), encoding)
     return r
 
 def goals():
