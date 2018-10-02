@@ -196,8 +196,7 @@ def get_answer():
                                 if c.tag == 'richpp':
                                     c = c[0]
                                     c = c[0]
-                                    msg = re.sub(r'<[/]{0,1}constr\.[a-z/ ]*>', "", ET.tostring(c).decode("utf-8"))
-                                    msg = re.sub(r'<[/]{0,1}pp>',  "", msg)
+                                    msg = re.sub(r'<[/]{0,1}[A-Za-z/. ]*>', "", ET.tostring(c).decode("utf-8"))
                                     msg = unescape(msg)
                                     if messageNode is not None:
                                         messageNode = messageNode + "\n\n" + msg

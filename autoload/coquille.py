@@ -156,6 +156,15 @@ def coq_raw_query(*args):
             info_msg = response.msg
     elif isinstance(response, CT.Err):
         info_msg = ET.tostring(response.err).decode("utf-8")
+        r = response.err
+        if r.tag == "value":
+            r = r[1]
+            if r.tag == "richpp":
+                r = r[0]
+                r = r[0]
+                msg = re.sub(r'<[/]{0,1}constr\.[a-z]*>', "", ET.tostring(r).decode("utf-8"))
+                msg = re.sub(r'<[/]{0,1}pp>',  "", msg)
+                info_msg = unescape(msg)
         print("FAIL")
     else:
         print("(ANOMALY) unknown answer: %s" % ET.tostring(response).decode("utf-8")) # ugly
@@ -353,8 +362,7 @@ def send_until_fail():
                 if r.tag == "richpp":
                     r = r[0]
                     r = r[0]
-                    msg = re.sub(r'<[/]{0,1}constr\.[a-z]*>', "", ET.tostring(r).decode("utf-8"))
-                    msg = re.sub(r'<[/]{0,1}pp>',  "", msg)
+                    msg = re.sub(r'<[/]{0,1}[A-Za-z/. ]*>', "", ET.tostring(c).decode("utf-8"))
                     info_msg = unescape(msg)
             loc_s = response.get('loc_s')
             if loc_s is not None:

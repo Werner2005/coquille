@@ -82,6 +82,12 @@ function! coquille#CoqideMapping()
     imap <buffer> <silent> <C-A-Right> <C-\><C-o>:CoqToCursor<CR>
 endfunction
 
+function! coquille#RawQueryCMDList(A,L,P)
+	echo a:A
+	" return ["About", "Print", "Check", "Eval", "Eval compute in"]
+	return "About\nPrint\nCheck\nEval\nEval compute in"
+endfunction
+
 function! coquille#Launch(...)
     if s:coq_running == 1
         echo "Coq is already running"
@@ -99,7 +105,7 @@ function! coquille#Launch(...)
         command! -buffer CoqKill call coquille#KillSession()
         command! -buffer -nargs=* CoqRestart call coquille#Restart(<f-args>)
 
-        command! -buffer -nargs=* Coq call coquille#RawQuery(<f-args>)
+        command! -buffer -nargs=* -complete=custom,coquille#RawQueryCMDList Coq call coquille#RawQuery(<f-args>)
 
         call coquille#ShowPanels()
 
