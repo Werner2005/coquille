@@ -362,7 +362,7 @@ def send_until_fail():
                 if r.tag == "richpp":
                     r = r[0]
                     r = r[0]
-                    msg = re.sub(r'<[/]{0,1}[A-Za-z/. ]*>', "", ET.tostring(c).decode("utf-8"))
+                    msg = re.sub(r'<[/]{0,1}[A-Za-z/. ]*>', "", ET.tostring(r).decode("utf-8"))
                     info_msg = unescape(msg)
             loc_s = response.get('loc_s')
             if loc_s is not None:
@@ -416,7 +416,6 @@ def _find_next_chunk(line, col):
     """
     buff = vim.current.buffer
     blen = len(buff)
-    bullets = ['{', '}', '-', '+', '*']
     # We start by striping all whitespaces (including \n) from the beginning of
     # the chunk.
     while line < blen and buff[line][col:].strip() == '':
@@ -425,9 +424,6 @@ def _find_next_chunk(line, col):
 
     if line >= blen: return
 
-    while buff[line][col] == ' ': # FIXME: keeping the stripped line would be
-        col += 1                  #   more efficient.
-
     # Then we check if the first character of the chunk is a bullet.
     # Intially I did that only when I was sure to be in a proof (by looking in
     # [encountered_dots] whether I was after a "collapsable" chunk or not), but
@@ -435,8 +431,20 @@ def _find_next_chunk(line, col):
     #      might not have been sent/detected yet).
     #   2/ The bullet chars can never be used at the *beginning* of a chunk
     #      outside of a proof. So the check was unecessary.
-    if buff[line][col] in bullets:
-        return (line, col + 1)
+    lineend = buff[line][col:]
+    match = re.search("^[\s]*[{}\-+*0-9:]+", lineend)
+    if match != None:
+        return (line, col + (match.span()[1] - 1))
+
+
+    while buff[line][col] == ' ': # FIXME: keeping the stripped line would be
+        col += 1                  #   more efficient.
+
+    # find bullet with subgoal select
+    #lineend = buff[line][col:]
+    #match = re.search("[0-9]*:\{", lineend)
+    #if match != None:
+    #    return (line, col + match.span()[1])
 
     # We might have a commentary before the bullet, we should be skiping it and
     # keep on looking.
@@ -590,3 +598,5 @@ def _hard_matcher(start, stop):
     last_stop =  {'line' : stop['line'], 'col' : stop['col']}
     last_line = _easy_matcher(last_start, last_stop)
     return "{0}\|{1}\|{2}".format(first_line, middle, last_line)
+
+# vim: ts=3 sw=3 
