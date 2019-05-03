@@ -226,8 +226,12 @@ def call(name, arg, encoding='utf-8'):
 
 def send_cmd(cmd):
     #coqtop.stdin.write(cmd)
-    fd = coqtop.stdin.fileno()
-    os.write(fd,cmd)
+    if coqtop.poll() == None:
+        fd = coqtop.stdin.fileno()
+        os.write(fd,cmd)
+    else:
+        raise Exception("coqtop exited")
+        # raise Exception("coq blocked. exit...")
 
 def restart_coq(*args):
     global coqtop, root_state, state_id
