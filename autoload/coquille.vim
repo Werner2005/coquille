@@ -94,6 +94,11 @@ function! coquille#Launch(...)
     else
         let s:coq_running = 1
 
+	" add kill commands befor lunch coq (for rest if coq killed while
+	" lunching)
+        command! -buffer CoqKill call coquille#KillSession()
+        command! -buffer -nargs=* CoqRestart call coquille#Restart(<f-args>)
+
         " initialize the plugin (launch coqtop)
         py3 coquille.launch_coq(*vim.eval("map(copy(a:000),'expand(v:val)')"))
 
@@ -102,8 +107,6 @@ function! coquille#Launch(...)
         command! -buffer CoqNext py3 coquille.coq_next()
         command! -buffer CoqUndo py3 coquille.coq_rewind()
         command! -buffer CoqToCursor py3 coquille.coq_to_cursor()
-        command! -buffer CoqKill call coquille#KillSession()
-        command! -buffer -nargs=* CoqRestart call coquille#Restart(<f-args>)
 
         command! -buffer -nargs=* -complete=custom,coquille#RawQueryCMDList Coq call coquille#RawQuery(<f-args>)
 
