@@ -172,6 +172,9 @@ def get_answer():
     counter = 0
     while True:
         try:
+            if coqtop.poll() != None:
+                # Coq died
+                return None
             d = os.read(fd, 0x1000).decode('utf-8')
             data += d
             try:
