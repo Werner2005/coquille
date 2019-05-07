@@ -346,6 +346,8 @@ def send_until_fail():
             optionnal_info = response.val[1]
             if len(response.val) > 1 and isinstance(response.val[1], tuple):
                 info_msg = response.val[1][1]
+            if len(info_msg) == 0 and goalResponse.msg != None and len(goalResponse.msg) > 1: 
+                info_msg = goalResponse.msg
         else:
             send_queue.clear()
             if isinstance(response, CT.Err):

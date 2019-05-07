@@ -169,12 +169,15 @@ def escape(cmd):
 def get_answer():
     fd = coqtop.stdout.fileno()
     data = ''
+    counter = 0
     while True:
         try:
             d = os.read(fd, 0x1000).decode('utf-8')
             data += d
             try:
                 elt = ET.fromstring('<coqtoproot>' + escape(data) + '</coqtoproot>')
+                #ET.ElementTree(element=elt).write('out' + str(counter) + '.xml')
+                counter = counter + 1
                 shouldWait = True
                 valueNode = None
                 messageNode = None
@@ -208,7 +211,7 @@ def get_answer():
                     vp = parse_response(valueNode)
                     if messageNode is not None:
                         if isinstance(vp, Ok):
-                            return Ok(vp.val, messageNode)
+                            vp = Ok(vp.val, messageNode)
                     return vp
             except ET.ParseError:
                 continue
