@@ -239,16 +239,31 @@ def send_cmd(cmd):
         raise Exception("coqtop exited")
         # raise Exception("coq blocked. exit...")
 
+def get_coq_version():
+    version = re.search("version ([0-9]*).([0-9]*).([0-9])*", subprocess.run(["coqtop", "--version"], stdout=subprocess.PIPE, encoding='utf-8').stdout)
+    return int(version.group(1) + version.group(2) + version.group(3))
+
+
 def restart_coq(*args):
     global coqtop, root_state, state_id
     if coqtop: kill_coqtop()
-    options = [ 'coqtop'
-              , '-ideslave'
-              , '-main-channel'
-              , 'stdfds'
-              , '-async-proofs'
-              , 'on'
-              ]
+    options = []
+    # since 8.9.0 coqtop has no ideslave argument
+    if get_coq_version() >= 890:
+        options = [ 'coqidetop'
+                  , '-main-channel'
+                  , 'stdfds'
+                  , '-async-proofs'
+                  , 'on'
+                  ]
+    else:
+        options = [ 'coqtop'
+                  , '-ideslave'
+                  , '-main-channel'
+                  , 'stdfds'
+                  , '-async-proofs'
+                  , 'on'
+                  ]
     projektOptions = []
     try:
         f = open("_CoqProject", "r")
@@ -318,3 +333,4 @@ def goals():
 
 def read_states():
     return states
+# vim: ts=4 sw=4 expandtab
