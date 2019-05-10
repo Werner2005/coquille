@@ -64,6 +64,8 @@ syn match   coqKwd             contained "|\|/\\\|\\/\|<->\|\~\|->\|=>\|{\|}\|&\
 syn match coqTermPunctuation   contained ":=\|:>\|:\|;\|,\|||\|\[\|\]\|@\|?\|\<_\>"
 
 " Various
+syn region coqFrom contains=coqString,coqRequire matchgroup=coqVernacCmd start="\<From\>" matchgroup=coqVernacPunctuation end="\.\_s" keepend
+syn region coqRequire contains=coqString matchgroup=coqVernacCmd start="\<Require\>\%(\_s\+\%(Export\|Import\)\>\)\?" matchgroup=coqVernacPunctuation end="\.\_s"
 syn region coqRequire contains=coqString matchgroup=coqVernacCmd start="\<Require\>\%(\_s\+\%(Export\|Import\)\>\)\?" matchgroup=coqVernacPunctuation end="\.\_s"
 syn region coqRequire matchgroup=coqVernacCmd start="\<Import\>" matchgroup=coqVernacPunctuation end="\.\_s"
 syn region coqRequire matchgroup=coqVernacCmd start="\<Export\>" matchgroup=coqVernacPunctuation end="\.\_s"
@@ -86,6 +88,7 @@ syn region coqOblExpr    contains=coqLtac   matchgroup=coqVernacPunctuation star
 " Scopes
 syn region coqBind    contains=coqScope matchgroup=coqVernacCmd start="\<Bind\|Delimit\>" matchgroup=coqVernacPunctuation end="\.\_s" keepend
 syn region coqArgsScope contains=coqScope matchgroup=coqVernacCmd start="\<Arguments\>" matchgroup=coqVernacPunctuation end="\.\_s" keepend
+syn region coqLocal    contains=coqScope,coqOpen matchgroup=coqVernacCmd start="\<Local\>" matchgroup=coqVernacPunctuation end="\.\_s" keepend
 syn region coqOpen    contains=coqScope matchgroup=coqVernacCmd start="\<Open\>" matchgroup=coqVernacPunctuation end="\.\_s" keepend
 syn region coqClose   contains=coqScope,coqLocalScope matchgroup=coqVernacCmd start="\<Close\>" matchgroup=coqVernacPunctuation end="\.\_s" keepend
 syn region coqScope   contained matchgroup=coqVernacCmd start="\<Scope\>" end="\.\_s"
@@ -196,6 +199,9 @@ syn region coqDecl       contains=coqIdent,coqDeclTerm,coqDeclBinder matchgroup=
 syn region coqDeclBinder contained contains=coqIdent,coqDeclTerm matchgroup=coqVernacPunctuation start="(" end=")" keepend
 syn region coqDeclTerm   contained contains=@coqTerm matchgroup=coqVernacPunctuation start=":" end=")"
 syn region coqDeclTerm   contained contains=@coqTerm matchgroup=coqVernacPunctuation start=":" end="\.\_s"
+
+syn region coqDebug      contains=coqDebugTerm start="\<\%(Compute\|About\|Print\)\>" end="\.\_s" keepend
+syn region coqDebugTerm  contained contains=@coqTerm matchgroup=coqVernacPunctuation start="\_s" end="\.\_s"
 
 " Theorems
 syn region coqThm       contains=coqThmName matchgroup=coqVernacCmd start="\<\%(Program\_s\+\)\?\%(Theorem\|Lemma\|Example\|Corollary\|Remark\|Fact\)\>" matchgroup=NONE end="\<\%(Qed\|Defined\|Admitted\|Abort\)\.\_s" keepend
