@@ -168,17 +168,23 @@ def escape(cmd):
 
 def get_answer():
     fd = coqtop.stdout.fileno()
-    data = ''
+    data = None
     counter = 0
+    retrys = 0
     while True:
         try:
             if coqtop.poll() != None:
                 # Coq died
                 return None
-            d = os.read(fd, 0x10000).decode('utf-8')
-            data += d
+            d = os.read(fd, 0x8000)
+            if data == None:
+                data = d
+            else:
+                data += d
             try:
-                elt = ET.fromstring('<coqtoproot>' + escape(data) + '</coqtoproot>')
+                if (data == None):
+                    continue
+                elt = ET.fromstring('<coqtoproot>' + escape(data.decode('utf-8')) + '</coqtoproot>')
                 #ET.ElementTree(element=elt).write('out' + str(counter) + '.xml')
                 counter = counter + 1
                 shouldWait = True
@@ -215,10 +221,16 @@ def get_answer():
                     if messageNode is not None:
                         if isinstance(vp, Ok):
                             vp = Ok(vp.val, messageNode)
+                    if retrys > 0:
+                        print("retrys: " + str(retrys))
                     return vp
             except ET.ParseError:
+                retrys += 1
                 continue
                 #return None
+            except UnicodeError:
+                retrys += 1
+                continue
         except OSError:
             # coqtop died
             return None
