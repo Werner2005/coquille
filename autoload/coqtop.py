@@ -175,7 +175,7 @@ def get_answer():
             if coqtop.poll() != None:
                 # Coq died
                 return None
-            d = os.read(fd, 0x1000).decode('utf-8')
+            d = os.read(fd, 0x10000).decode('utf-8')
             data += d
             try:
                 elt = ET.fromstring('<coqtoproot>' + escape(data) + '</coqtoproot>')
