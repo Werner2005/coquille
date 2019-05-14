@@ -170,7 +170,6 @@ def get_answer():
     fd = coqtop.stdout.fileno()
     data = None
     counter = 0
-    retrys = 0
     while True:
         try:
             if coqtop.poll() != None:
@@ -221,15 +220,11 @@ def get_answer():
                     if messageNode is not None:
                         if isinstance(vp, Ok):
                             vp = Ok(vp.val, messageNode)
-                    if retrys > 0:
-                        print("retrys: " + str(retrys))
                     return vp
             except ET.ParseError:
-                retrys += 1
                 continue
                 #return None
             except UnicodeError:
-                retrys += 1
                 continue
         except OSError:
             # coqtop died

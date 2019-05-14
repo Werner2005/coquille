@@ -1,0 +1,10 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =8
+let g:netrw_dirhist_1='/home/andreas/.vim/coquille'
+let g:netrw_dirhist_2='/home/andreas/.vim/coquille/autoload'
+let g:netrw_dirhist_3='/home/andreas/why3/why3/lib/coq-tactic'
+let g:netrw_dirhist_4='/home/andreas/coq'
+let g:netrw_dirhist_5='/home/andreas/coq/book'
+let g:netrw_dirhist_6='/home/andreas/coq/book/qc'
+let g:netrw_dirhist_7='/home/andreas/coq/book/qc/qc'
+let g:netrw_dirhist_8='/home/andreas/studium/diss/time/rt-proofs/util'
