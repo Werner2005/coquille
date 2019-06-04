@@ -250,8 +250,32 @@ def get_coq_version():
     version = re.search("version ([0-9]*).([0-9]*).([0-9])*", subprocess.run(["coqtop", "--version"], stdout=subprocess.PIPE, encoding='utf-8').stdout)
     return int(version.group(1) + version.group(2) + version.group(3))
 
+def parseCoqProject(path):
+    (head, tail) = os.path.split(path)
+    filename = head + "/_CoqProject"
+    try:
+        f = open(filename, "r")
+        projektOptions = f.read().split()
+        ret = []
+        f.close()
+        i = 0
+        while i < len(projektOptions):
+            # replace . with absulte path
+            if projektOptions[i] == "." and head != os.getcwd():
+                ret.append(head)
+            elif projektOptions[i] == "-arg":
+                # ignore arg + following arguments
+                break
+            else:
+                ret.append(projektOptions[i])
+            i += 1
+        return ret
+    except IOError:
+        if head != "/":
+            return parseCoqProject(head)
+        return []
 
-def restart_coq(*args):
+def restart_coq(filename, *args):
     global coqtop, root_state, state_id
     if coqtop: kill_coqtop()
     options = []
@@ -271,13 +295,7 @@ def restart_coq(*args):
                   , '-async-proofs'
                   , 'on'
                   ]
-    projektOptions = []
-    try:
-        f = open("_CoqProject", "r")
-        projektOptions = f.read().split()
-        f.close()
-    except IOError:
-        projektOptions = []
+    projektOptions = parseCoqProject(filename)
     options = options + projektOptions
 
     try:
@@ -304,7 +322,7 @@ def restart_coq(*args):
         print("Error: couldn't launch coqtop")
 
 def launch_coq(*args):
-    restart_coq(*args)
+    restart_coq("", *args)
 
 def cur_state():
     if len(states) == 0:

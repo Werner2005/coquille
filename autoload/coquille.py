@@ -173,7 +173,7 @@ def coq_raw_query(*args):
 
 
 def launch_coq(*args):
-    CT.restart_coq(*args)
+    CT.restart_coq(vim.current.buffer.name, *args)
 
 def debug():
     if encountered_dots:
