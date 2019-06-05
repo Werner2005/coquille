@@ -184,7 +184,7 @@ def get_answer():
                 if (data == None):
                     continue
                 elt = ET.fromstring('<coqtoproot>' + escape(data.decode('utf-8')) + '</coqtoproot>')
-                #ET.ElementTree(element=elt).write('out' + str(counter) + '.xml')
+                ET.ElementTree(element=elt).write('out' + str(counter) + '.xml')
                 counter = counter + 1
                 shouldWait = True
                 valueNode = None

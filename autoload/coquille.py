@@ -221,28 +221,33 @@ def show_goal():
     goals = response.val.val
 
     sub_goals = goals.fg
-
-    if len(goals.given_up):
-        buff.append(['WARNING: Some subproofs left open'])
-        buff.append('')
-        
-
     nb_subgoals = len(sub_goals)
     fgclosed = False
-    if nb_subgoals == 0 and len(goals.bg) > 0:
+
+    if len(goals.fg) == 0 and len(goals.bg) == 0 and len(goals.given_up) > 0: 
+        buff.append(['No more subgoals, but there are some goals you gave up:'])
+        sub_goals = goals.given_up
+        nb_subgoals = len(sub_goals)
         fgclosed = True
-        buff.append(['This subproof is complete, but there are some unfocused goals:'])
+    elif len(goals.given_up) > 0:
+        buff.append(['WARNING: Some subgaols left open'])
         buff.append('')
+
+    if nb_subgoals == 0 and len(goals.bg) > 0:
         sub_goals = []
         for idx, g in enumerate(goals.bg):
             (first, second) = g
             sub_goals.extend(first)
             sub_goals.extend(second)
         nb_subgoals = len(sub_goals)
+        if nb_subgoals > 0:
+            fgclosed = True
+            buff.append(['This subproof is complete, but there are some unfocused goals:'])
+            buff.append('')
 
-
-    plural_opt = '' if nb_subgoals == 1 else 's'
-    buff.append(['%d subgoal%s' % (nb_subgoals, plural_opt), ''])
+    if not fgclosed:
+        plural_opt = '' if nb_subgoals == 1 else 's'
+        buff.append(['%d subgoal%s' % (nb_subgoals, plural_opt), ''])
 
     for idx, sub_goal in enumerate(sub_goals):
         _id = sub_goal.id
@@ -258,6 +263,9 @@ def show_goal():
         lines = list(map(lambda s: s.encode('utf-8'), ccl.split('\n')))
         buff.append(lines)
         buff.append('')
+
+    if len(goals.fg) == 0 and len(goals.bg) == 0 and len(goals.given_up) > 0: 
+        buff.append(['You need to go back and solve them.'])
 
 def show_info():
     global info_msg
