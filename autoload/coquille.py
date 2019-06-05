@@ -187,8 +187,8 @@ def debug():
 #####################################
 
 def refresh():
-    show_goal()
     show_info()
+    show_goal()
     reset_color()
 
 def show_goal():
@@ -222,7 +222,25 @@ def show_goal():
 
     sub_goals = goals.fg
 
+    if len(goals.given_up):
+        buff.append(['Waring some subproofs left open'])
+        buff.append('')
+        
+
     nb_subgoals = len(sub_goals)
+    fgclosed = False
+    if nb_subgoals == 0 and len(goals.bg) > 0:
+        fgclosed = True
+        buff.append(['This subproof is complete, but there are some unfocused goals:'])
+        buff.append('')
+        sub_goals = []
+        for idx, g in enumerate(goals.bg):
+            (first, second) = g
+            sub_goals.extend(first)
+            sub_goals.extend(second)
+        nb_subgoals = len(sub_goals)
+
+
     plural_opt = '' if nb_subgoals == 1 else 's'
     buff.append(['%d subgoal%s' % (nb_subgoals, plural_opt), ''])
 
@@ -230,7 +248,7 @@ def show_goal():
         _id = sub_goal.id
         hyps = sub_goal.hyp
         ccl = sub_goal.ccl
-        if idx == 0:
+        if idx == 0 and not fgclosed:
             # we print the environment only for the current subgoal
             for hyp in hyps:
                 lst = list(map(lambda s: s.encode('utf-8'), hyp.split('\n')))
@@ -601,4 +619,4 @@ def _hard_matcher(start, stop):
     last_line = _easy_matcher(last_start, last_stop)
     return "{0}\|{1}\|{2}".format(first_line, middle, last_line)
 
-# vim: ts=3 sw=3 
+# vim: ts=4 sw=4
