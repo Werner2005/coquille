@@ -223,7 +223,7 @@ def show_goal():
     sub_goals = goals.fg
 
     if len(goals.given_up):
-        buff.append(['Waring some subproofs left open'])
+        buff.append(['WARNING: Some subproofs left open'])
         buff.append('')
         
 
