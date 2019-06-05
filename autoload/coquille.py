@@ -434,10 +434,9 @@ def _find_next_chunk(line, col):
     #   2/ The bullet chars can never be used at the *beginning* of a chunk
     #      outside of a proof. So the check was unecessary.
     lineend = buff[line][col:]
-    match = re.search("^[\s]*[{}\-+*0-9:]+", lineend)
+    match = re.search("(^[\s]*[0-9]+[\s]*:[\s]*{)|(^[\s]*\*{1,2})|(^[\s]*[{}\-+])", lineend)
     if match != None:
         return (line, col + (match.span()[1] - 1))
-
 
     while buff[line][col] == ' ': # FIXME: keeping the stripped line would be
         col += 1                  #   more efficient.
@@ -473,6 +472,7 @@ def _find_dot_after(line, col):
     dot_pos = s.find('.')
     com_pos = s.find('(*')
     str_pos = s.find('"')
+    
     if com_pos == -1 and dot_pos == -1 and str_pos == -1:
         # Nothing on this line
         return _find_dot_after(line + 1, 0)
