@@ -220,11 +220,22 @@ def show_goal():
 
     goals = response.val.val
 
+    bg_sub_goals = []
+    for idx, g in enumerate(goals.bg):
+        (first, second) = g
+        bg_sub_goals.extend(first)
+        bg_sub_goals.extend(second)
+
     sub_goals = goals.fg
     nb_subgoals = len(sub_goals)
     fgclosed = False
-
-    if len(goals.fg) == 0 and len(goals.bg) == 0 and len(goals.given_up) > 0: 
+    
+    if len(goals.fg) == 0 and len(bg_sub_goals) == 0 and len(goals.shelved) > 0:
+        buff.append(['All the remaining goals are on the shelf:',''])
+        sub_goals = goals.shelved
+        nb_subgoals = len(sub_goals)
+        fgclosed = True
+    elif len(goals.fg) == 0 and len(bg_sub_goals) == 0 and len(goals.shelved) == 0 and len(goals.given_up) > 0: 
         buff.append(['No more subgoals, but there are some goals you gave up:'])
         sub_goals = goals.given_up
         nb_subgoals = len(sub_goals)
@@ -233,12 +244,8 @@ def show_goal():
         buff.append(['WARNING: Some subgaols left open'])
         buff.append('')
 
-    if nb_subgoals == 0 and len(goals.bg) > 0:
-        sub_goals = []
-        for idx, g in enumerate(goals.bg):
-            (first, second) = g
-            sub_goals.extend(first)
-            sub_goals.extend(second)
+    if nb_subgoals == 0 and len(bg_sub_goals) > 0:
+        sub_goals = bg_sub_goals
         nb_subgoals = len(sub_goals)
         if nb_subgoals > 0:
             fgclosed = True
@@ -247,7 +254,10 @@ def show_goal():
 
     if not fgclosed:
         plural_opt = '' if nb_subgoals == 1 else 's'
-        buff.append(['%d subgoal%s' % (nb_subgoals, plural_opt), ''])
+        buff.append(['%d subgoal%s' % (nb_subgoals, plural_opt)])
+        if len(goals.shelved) > 0:
+            buff.append(["(shelved: %d)" % len(goals.shelved)])
+        buff.append('')
 
     for idx, sub_goal in enumerate(sub_goals):
         _id = sub_goal.id
@@ -264,7 +274,7 @@ def show_goal():
         buff.append(lines)
         buff.append('')
 
-    if len(goals.fg) == 0 and len(goals.bg) == 0 and len(goals.given_up) > 0: 
+    if len(goals.fg) == 0 and len(bg_sub_goals) == 0 and len(goals.shelved) == 0 and len(goals.given_up) > 0: 
         buff.append(['You need to go back and solve them.'])
 
 def show_info():
