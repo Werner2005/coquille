@@ -256,6 +256,8 @@ def parseCoqProject(path):
     try:
         f = open(filename, "r")
         projektOptions = f.read().split()
+        unqote=False
+        unqoteFirst=True
         ret = []
         f.close()
         i = 0
@@ -264,11 +266,19 @@ def parseCoqProject(path):
             if projektOptions[i] == "." and head != os.getcwd():
                 ret.append(head)
             elif projektOptions[i] == "-arg":
-                # ignore arg + following arguments
-                break
+                # ignore arg
+                unqote = True
+                unqoteFirst = False
+            elif unqote and ("\"" in projektOptions[i]):
+                if unqoteFirst:
+                    unqote = False
+                unqoteFirst = True
+                ret.append(projektOptions[i].replace("\"", ""))
             else:
                 ret.append(projektOptions[i])
             i += 1
+        if unqote:
+            raise Exception("Missing \" found in _CoqProject fix _CoqProject file")
         return ret
     except IOError:
         if head != "/":
