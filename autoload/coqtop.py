@@ -269,15 +269,19 @@ def parseCoqProject(path):
                 # ignore arg
                 unqote = True
                 unqoteFirst = False
-            elif unqote and ("\"" in projektOptions[i]):
+            elif unqote and (("\"" in projektOptions[i]) or ("\'" in projektOptions[i])):
                 if unqoteFirst:
                     unqote = False
                 unqoteFirst = True
-                ret.append(projektOptions[i].replace("\"", ""))
+                ret.append(projektOptions[i].replace("\"", "").replace("'", ""))
+            elif projektOptions[i] == "''":
+                ret.append("");
+            elif projektOptions[i] == "\"\"":
+                ret.append("");
             else:
                 ret.append(projektOptions[i])
             i += 1
-        if unqote:
+        if unqote and unqoteFirst:
             raise Exception("Missing \" found in _CoqProject fix _CoqProject file")
         return ret
     except IOError:
