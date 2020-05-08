@@ -85,7 +85,7 @@ endfunction
 function! coquille#RawQueryCMDList(A,L,P)
 	echo a:A
 	" return ["About", "Print", "Check", "Eval", "Eval compute in"]
-	return "About\nPrint\nCheck\nEval\nEval compute in"
+	return "About\nPrint\nCheck\nEval\nEval compute in\nSearch"
 endfunction
 
 function! coquille#Launch(...)
